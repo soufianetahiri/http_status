@@ -17,11 +17,17 @@ namespace Http_Status_Code
         const int SC_MINIMIZE = 0xF020;
         const int SC_MAXIMIZE = 0xF030;
         const int SC_SIZE = 0xF000;
+        private const string V = "  ___ ___________________________________    ________________________________________ ___  _________";
+        private const string V1 = " /   |   \\__    ___/\\__    ___/\\______   \\  /   _____/\\__    ___/  _  \\__    ___/    |   \\/   _____/";
+        private const string V2 = "/    ~    \\|    |     |    |    |     ___/  \\_____  \\   |    | /  /_\\  \\|    |  |    |   /\\_____  \\ ";
+        private const string V3 = "\\    Y    /|    |     |    |    |    |      /        \\  |    |/    |    \\    |  |    |  / /        \\";
+        private const string V4 = " \\___|_  / |____|     |____|    |____|     /_______  /  |____|\\____|__  /____|  |______/ /_______  /";
+        private const string V5 = "       \\/                                          \\/                 \\/                         \\/ ";
         static bool isScanning = true;
         static string userInput;
         static Uri uriResult;
-        static string getting = "==================GETting STARTS=================";
-        static string gettinge = "==================GETting ENDS=================";
+        static string getting = "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤_GET_ing STARTS_¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤";
+        static string gettinge = "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤_GET_ing ENDS_¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤";
 
         public static string Usage { get; } = "Usage : http_status URL | http_status file.txt \n\r if running just type in the url or the path to the file (with an url by line) to check";
 
@@ -41,19 +47,25 @@ namespace Http_Status_Code
             DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_SIZE, MF_BYCOMMAND);
             Console.ForegroundColor = ConsoleColor.Red;
             Console.SetWindowSize(100, 50);
-            string sb = "__________________________________________________________________________________________________" +
-                "  ___ ___________________________________    ________________________________________ ___  _________" +
-                " /   |   \\__    ___/\\__    ___/\\______   \\  /   _____/\\__    ___/  _  \\__    ___/    |   \\/   _____/" +
-                "/    ~    \\|    |     |    |    |     ___/  \\_____  \\   |    | /  /_\\  \\|    |  |    |   /\\_____  \\ " +
-                "\\    Y    /|    |     |    |    |    |      /        \\  |    |/    |    \\    |  |    |  / /        \\" +
-                " \\___|_  / |____|     |____|    |____|     /_______  /  |____|\\____|__  /____|  |______/ /_______  /" +
-                "       \\/                                          \\/                 \\/                         \\/ ";
-            Output.Write(sb);
+            //string sb =
+            //    V +
+            //    V1 +
+            //    V2 +
+            //    V3 +
+            //    V4 +
+            //    V5;
+            //Console.Write(sb);
+            Output.WriteLine(V);
+            Output.WriteLine(V1);
+            Output.WriteLine(V2);
+            Output.WriteLine(V3);
+            Output.WriteLine(V4);
+            Output.WriteLine(V5);
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             string auth = "v0.1 by Soufiane Tahiri";
-            Console.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (auth.Length / 2)) + "}", auth));
-            Console.WriteLine("\n\r");
-            Console.WriteLine("\n\r");
+            Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (auth.Length / 2)) + "}", auth));
+ 
+            Output.WriteLine("\n\r");
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             while (isScanning)
             {
