@@ -1,9 +1,13 @@
 ﻿using http_status_code;
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
+using System.Net.Security;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Http_Status_Code
 {
@@ -16,8 +20,8 @@ namespace Http_Status_Code
         static bool isScanning = true;
         static string userInput;
         static Uri uriResult;
-        static HttpClient client = new HttpClient();
-        static string getting = "=========GETting Started========";
+        static string getting = "==================GETting STARTS=================";
+        static string gettinge = "==================GETting ENDS=================";
 
         public static string Usage { get; } = "Usage : http_status URL | http_status file.txt \n\r if running just type in the url or the path to the file (with an url by line) to check";
 
@@ -53,19 +57,21 @@ namespace Http_Status_Code
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             while (isScanning)
             {
-                CheckArgsAsync(args, userInput).Wait();
+                CheckArgs(args, userInput);
                 userInput = Console.ReadLine();
             }
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (gettinge.Length / 2)) + "}", gettinge));
         }
 
-        private static async System.Threading.Tasks.Task<bool> CheckArgsAsync(string[] args, string userin = "")
+        private static void CheckArgs(string[] args, string userin = "")
         {
             try
             {
                 if (args == null || args.Length != 1 && string.IsNullOrEmpty(userInput))
                 {
                     WriteUsage();
-                    return false;
+
                 }
                 if (args.Length > 0 || !string.IsNullOrEmpty(userin))
                 {
@@ -74,28 +80,39 @@ namespace Http_Status_Code
                     {
                         isScanning = false;
                     }
+                    else
                     if (userInput.Contains(".txt") && !File.Exists(userInput))
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                         Output.WriteLine(string.Format("{0} does not exists.", userInput));
-                        return false;
+
                     }
                     else if (File.Exists(userInput))
                     {
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (getting.Length / 2)) + "}", getting));
+                        Output.WriteLine("\n\r");
                         StreamReader file = new StreamReader(userInput);
                         string line;
                         while ((line = file.ReadLine()) != null)
                         {
+
+
                             if (ValidHttpURL(line))
                             {
                                 Call(uriResult.ToString());
                                 System.Threading.Thread.Sleep(50);
                             }
+
                         }
+
+                        System.Threading.Thread.Sleep(50);
                         Console.WriteLine("\n\r");
                         string LogDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
                         Console.WriteLine(string.Format("Output saved to {0}", LogDirPath));
+                        isScanning = false;
                     }
+                    else
                     if (ValidHttpURL(userInput))
                     {
                         Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -104,18 +121,19 @@ namespace Http_Status_Code
                         Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (getting.Length / 2)) + "}", getting));
                         Output.WriteLine("\n\r");
                         Call(uriResult.ToString());
+                        isScanning = false;
                     }
                 }
             }
             catch (Exception ex)
             {
-                return false;
+                throw (ex);
             }
-            return false;
+
         }
         private static void Call(string url)
         {
-            CallTheHostAsync(url);
+            AsyncHelper.RunSync(() => CallTheHostAsync(url));
             TryHttpAndHttps(url);
         }
         public static bool ValidHttpURL(string s)
@@ -144,24 +162,36 @@ namespace Http_Status_Code
         }
         private static async System.Threading.Tasks.Task CallTheHostAsync(string uri)
         {
-        
-            HttpResponseMessage checkingResponse = await client.GetAsync(uri).ConfigureAwait(true ); ;
-            if (checkingResponse.IsSuccessStatusCode)
+            try
             {
-                Console.ForegroundColor = ConsoleColor.Green;
+                HttpClient client = new HttpClient();
+                ServicePointManager.ServerCertificateValidationCallback = delegate (object s, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) { return true; };
+                ServicePointManager.Expect100Continue = true;
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
+                client.Timeout = TimeSpan.FromMilliseconds(3000);
+                HttpResponseMessage checkingResponse = await client.GetAsync(uri);
+                if (checkingResponse.IsSuccessStatusCode)
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkYellow;
+                }
+                Output.WriteLine(string.Format("[{0}] {1} {2} - {3}", DateTime.Now, checkingResponse.ReasonPhrase, (int)checkingResponse.StatusCode, uri));
             }
-            else
+            catch (Exception ex)
             {
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Output.WriteLine(string.Format("[{0}] {1} - {2}", DateTime.Now, "TimeOut or SSLError", uri));
 
-                Console.ForegroundColor = ConsoleColor.DarkYellow;
             }
-            Output.WriteLine(string.Format("[{0}] {1} {2} - {3}", DateTime.Now, checkingResponse.ReasonPhrase, (int)checkingResponse.StatusCode, uri));
-            System.Threading.Thread.Sleep(50);
+        
         }
         private static void TryHttpAndHttps(string url)
         {
             url = url.Replace("http://", "https://");
-            CallTheHostAsync(url);
+            AsyncHelper.RunSync(() => CallTheHostAsync(url));
         }
     }
 }
