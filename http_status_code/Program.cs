@@ -72,8 +72,7 @@ namespace Http_Status_Code
                 CheckArgs(args, userInput);
                 userInput = Console.ReadLine();
             }
-            Console.ForegroundColor = ConsoleColor.DarkYellow;
-            Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (gettinge.Length / 2)) + "}", gettinge));
+
         }
 
         private static void CheckArgs(string[] args, string userin = "")
@@ -119,10 +118,12 @@ namespace Http_Status_Code
                         }
 
                         System.Threading.Thread.Sleep(50);
-                        Console.WriteLine("\n\r");
+                        Output.WriteLine("\n\r");
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (gettinge.Length / 2)) + "}", gettinge));
                         Console.ForegroundColor = ConsoleColor.Green;
                         string LogDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
-                        Console.WriteLine(string.Format("Output saved to {0}", LogDirPath));
+                        Output.WriteLine(string.Format("Output saved to {0}", LogDirPath));
                         isScanning = false;
                     }
                     else
@@ -134,6 +135,8 @@ namespace Http_Status_Code
                         Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (getting.Length / 2)) + "}", getting));
                         Output.WriteLine("\n\r");
                         Call(uriResult.ToString());
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                        Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (gettinge.Length / 2)) + "}", gettinge));
                         Console.ForegroundColor = ConsoleColor.Green;
                         string LogDirPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
                         Console.WriteLine(string.Format("Output saved to {0}", LogDirPath));
@@ -209,5 +212,6 @@ namespace Http_Status_Code
             url = url.Replace("http://", "https://");
             AsyncHelper.RunSync(() => CallTheHostAsync(url));
         }
+
     }
 }
