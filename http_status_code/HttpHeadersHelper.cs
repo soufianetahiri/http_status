@@ -13,13 +13,13 @@ namespace http_status_code
         public static void CheckOwaspRecHeader(HttpResponseMessage httpResponseMessage)
         {
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Output.WriteLine(string.Format("[{0}] {1} ", DateTime.Now, string.Format("Checking  OWASP recommended headers [STARTS {0}]",httpResponseMessage.RequestMessage.RequestUri.ToString())));
+            Output.WriteLine(string.Format("[{0}] {1} ", DateTime.Now, string.Format("HTTP Header Analysis starts [for {0}]", httpResponseMessage.RequestMessage.RequestUri.ToString())));
             HttpHeaders headers = httpResponseMessage.Headers;
 
             //check x-xss-protection:
             if (headers.TryGetValues("x-xss-protection", out IEnumerable<string> xss))
             {
-                if (xss.First().Trim().StartsWith("1;mode=block"))
+                if (xss.First().Trim().ToLower().Contains("1;mode=block"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-XSS-Protection) Cross-Site Scripting Protection is enforced.", xss.First()));
@@ -38,15 +38,15 @@ namespace http_status_code
             // check x-frame-options:
             if (headers.TryGetValues("x-frame-options", out IEnumerable<string> xframe))
             {
-                if (xframe.First().Trim().Contains("deny") || xframe.First().Trim().Contains("sameorigin"))
+                if (xframe.First().Trim().ToLower().Contains("deny") || xframe.First().Trim().ToLower().Contains("sameorigin"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-Frame-Options) Cross-Frame Scripting Protection is enforced.", string.Join(" ", xframe)));
+                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-Frame-Options) Cross-Frame Scripting Protection is enforced.", getHeaderValue( xframe)));
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ - ] Server does not enforce Cross-Frame Scripting Protection.\nThe X-Frame-Options Header setting is either inadequate or missing.\nClient may be vulnerable to Click-Jacking Attacks. ", string.Join(" ", xframe)));
+                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ - ] Server does not enforce Cross-Frame Scripting Protection.\nThe X-Frame-Options Header setting is either inadequate or missing.\nClient may be vulnerable to Click-Jacking Attacks. ", getHeaderValue( xframe)));
                 }
             }
             else
@@ -60,12 +60,12 @@ namespace http_status_code
                 if (xcontent.First() == "nosniff")
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-Content-Type-Options) MIME-Sniffing Protection is enforced.", string.Join(" ", xcontent)));
+                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-Content-Type-Options) MIME-Sniffing Protection is enforced.", getHeaderValue(xcontent)));
                 }
                 else
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ - ] Server does not enforce MIME-Sniffing Protection.\nThe X-Content-Type-Options Header setting is either inadequate or missing.\nClient may be vulnerable to MIME-Sniffing Attacks.", string.Join(" ", xcontent)));
+                    Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ - ] Server does not enforce MIME-Sniffing Protection.\nThe X-Content-Type-Options Header setting is either inadequate or missing.\nClient may be vulnerable to MIME-Sniffing Attacks.", getHeaderValue( xcontent)));
                 }
 
             }
@@ -168,7 +168,7 @@ namespace http_status_code
             //check x-download-options:
             if (headers.TryGetValues("x-download-options", out IEnumerable<string> xdo))
             {
-                if (xdo != null && xdo.First().Trim() == "noopen")
+                if (xdo != null && xdo.First().Trim().ToLower() == "noopen")
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-Download-Options) File Download and Open Restriction Policies are enforced. ", getHeaderValue(xdo)));
@@ -182,7 +182,7 @@ namespace http_status_code
             //check cache-control:
             if (headers.TryGetValues("cache-control", out IEnumerable<string> cc))
             {
-                if (cc != null && cc.First().Trim().StartsWith("noopen") || cc.First().Trim().StartsWith("no-cache"))
+                if (cc != null && cc.First().Trim().ToLower().Contains("private") || cc.First().Trim().ToLower().Contains("no-cache"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (Cache-control) Private Caching or No-Cache is enforced.", string.Join(" ", cc)));
@@ -196,7 +196,7 @@ namespace http_status_code
             //check x-permitted-cross-domain-policies:
             if (headers.TryGetValues("'X-Permitted-Cross-Domain-Policies", out IEnumerable<string> xpcdp))
             {
-                if (xpcdp != null && xpcdp.First().Trim().StartsWith("master-only") || xpcdp.First().Trim().StartsWith("none"))
+                if (xpcdp != null && xpcdp.First().Trim().ToLower().Contains("master-only") || xpcdp.First().Trim().ToLower().Contains("none"))
                 {
                     Console.ForegroundColor = ConsoleColor.Green;
                     Output.WriteLine(string.Format("{0} [VALUES {1}] ", "[ + ] (X-Permitted-Cross-Domain-Policies) X-Permitted-Cross-Domain-Policies are enforced. ", getHeaderValue(xpcdp)));
@@ -208,7 +208,7 @@ namespace http_status_code
                 Output.WriteLine(string.Format("{0} [HEADER {1}] ", "[ - ] Server does not enforce a X-Permitted-Cross-Domain-Policies.\nThe Cross-Domain Meta Policy Header setting is either inadequate or missing.\nClient may be vulnerable to Cross-Protocol-Scripting Attacks. ", getHeaderValue(xpcdp)));
             }
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Output.WriteLine(string.Format("[{0}] {1} ", DateTime.Now, "Checking  OWASP recommended headers [ENDS]"));
+            Output.WriteLine(string.Format("[{0}] {1} ", DateTime.Now, "HTTP Header Analysis Ends."));
         }
 
 
