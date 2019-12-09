@@ -1,12 +1,16 @@
 ﻿using http_status_code;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Http_Status_Code
@@ -28,8 +32,8 @@ namespace Http_Status_Code
         static Uri uriResult;
         static string getting = "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤_GET_ing STARTS_¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤";
         static string gettinge = "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤_GET_ing ENDS_¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤";
-
-        public static string Usage { get; } = "Usage : http_status URL | http_status file.txt \n\r if running just type in the url or the path to the file (with an url by line) to check";
+        private static readonly string[] owaspHeaders = { "HTTP Strict Transport Security", "Public Key Pinning Extension for HTTP", "X-Frame-Options", "X-XSS-Protection", "X-Content-Type-Options", "Content-Security-Policy", "X-Permitted-Cross-Domain-Policies", "Referrer-Policy", "Expect-CT", "Feature-Policy" };
+        public static string Usage { get; } = "Usage : http_status URL | http_status file.txt \n\r if running just type in the url or the path to the file (with an url by line) to check. \n\r HTTP Header seucrity is checked when single URL scan";
 
         [DllImport("user32.dll")]
         public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);
@@ -47,14 +51,6 @@ namespace Http_Status_Code
             DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_SIZE, MF_BYCOMMAND);
             Console.ForegroundColor = ConsoleColor.Red;
             Console.SetWindowSize(100, 50);
-            //string sb =
-            //    V +
-            //    V1 +
-            //    V2 +
-            //    V3 +
-            //    V4 +
-            //    V5;
-            //Console.Write(sb);
             Output.WriteLine(V);
             Output.WriteLine(V1);
             Output.WriteLine(V2);
@@ -64,7 +60,7 @@ namespace Http_Status_Code
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             string auth = "v0.1 by Soufiane Tahiri";
             Output.WriteLine(string.Format("{0," + ((Console.WindowWidth / 2) + (auth.Length / 2)) + "}", auth));
- 
+
             Output.WriteLine("\n\r");
             Console.ForegroundColor = ConsoleColor.DarkYellow;
             while (isScanning)
@@ -107,16 +103,12 @@ namespace Http_Status_Code
                         string line;
                         while ((line = file.ReadLine()) != null)
                         {
-
-
                             if (ValidHttpURL(line))
                             {
                                 Call(uriResult.ToString());
                                 System.Threading.Thread.Sleep(50);
                             }
-
                         }
-
                         System.Threading.Thread.Sleep(50);
                         Output.WriteLine("\n\r");
                         Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -148,7 +140,6 @@ namespace Http_Status_Code
             {
                 throw (ex);
             }
-
         }
         private static void Call(string url)
         {
@@ -179,7 +170,7 @@ namespace Http_Status_Code
             Console.ForegroundColor = ConsoleColor.White;
 
         }
-        private static async System.Threading.Tasks.Task CallTheHostAsync(string uri)
+        private static async Task CallTheHostAsync(string uri)
         {
             try
             {
@@ -191,6 +182,9 @@ namespace Http_Status_Code
                 HttpResponseMessage checkingResponse = await client.GetAsync(uri);
                 if (checkingResponse.IsSuccessStatusCode)
                 {
+
+                    Task t = Task.Factory.StartNew(() => HttpHeadersHelper.CheckOwaspRecHeader(checkingResponse));
+                    t.Wait();
                     Console.ForegroundColor = ConsoleColor.Green;
                 }
                 else
@@ -199,19 +193,21 @@ namespace Http_Status_Code
                 }
                 Output.WriteLine(string.Format("[{0}] {1} {2} - {3}", DateTime.Now, checkingResponse.ReasonPhrase, (int)checkingResponse.StatusCode, uri));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 Console.ForegroundColor = ConsoleColor.DarkMagenta;
                 Output.WriteLine(string.Format("[{0}] {1} - {2}", DateTime.Now, "TimeOut or SSLError", uri));
 
             }
-        
+
         }
+    
         private static void TryHttpAndHttps(string url)
         {
             url = url.Replace("http://", "https://");
             AsyncHelper.RunSync(() => CallTheHostAsync(url));
         }
 
+      
     }
 }
