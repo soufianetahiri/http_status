@@ -204,7 +204,15 @@ namespace Http_Status_Code
     
         private static void TryHttpAndHttps(string url)
         {
-            url = url.Replace("http://", "https://");
+            if (url.ToLower().StartsWith("https://"))
+            {
+                url = url.Replace("https://", "http://");
+            }
+            else if(url.ToLower().StartsWith("http://"))
+            {
+                url = url.Replace("http://", "https://");
+            }
+  
             AsyncHelper.RunSync(() => CallTheHostAsync(url));
         }
 
