@@ -1,5 +1,5 @@
 # http_status
-checks http response code from list of URLs
+checks http response code from list of URLs (simple GET only)
 
 does some basic headers security checks
 
