@@ -1,16 +1,12 @@
-﻿using http_status_code;
+using http_status_code;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Http_Status_Code
@@ -29,11 +25,13 @@ namespace Http_Status_Code
         private const string V5 = "       \\/                                          \\/                 \\/                         \\/ ";
         static bool isScanning = true;
         static string userInput;
+        private static readonly string noChecks = "--ignore-checks";
         static Uri uriResult;
+        private static bool ignoreChecks = false;
         static string getting = "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤_GET_ing STARTS_¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤";
         static string gettinge = "¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤_GET_ing ENDS_¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤¤";
         private static readonly string[] owaspHeaders = { "HTTP Strict Transport Security", "Public Key Pinning Extension for HTTP", "X-Frame-Options", "X-XSS-Protection", "X-Content-Type-Options", "Content-Security-Policy", "X-Permitted-Cross-Domain-Policies", "Referrer-Policy", "Expect-CT", "Feature-Policy" };
-        public static string Usage { get; } = "Usage : http_status URL | http_status file.txt \n\r if running just type in the url or the path to the file (with an url by line) to check. \n\r HTTP Header seucrity is checked when single URL scan";
+        public static string Usage { get; } = "Usage : http_status URL | http_status file.txt (--ignore-checks ...to ignore checks :)) \n\r if running just type in the url or the path to the file (with an url by line) to check. \n\r HTTP Header seucrity is checked when single URL scan";
 
         [DllImport("user32.dll")]
         public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);
@@ -82,7 +80,17 @@ namespace Http_Status_Code
                 }
                 if (args.Length > 0 || !string.IsNullOrEmpty(userin))
                 {
-
+                    try
+                    {
+                        if (userInput.Split(' ')[1].ToString() == noChecks)
+                        {
+                            ignoreChecks = true;
+                            userInput = userInput.Split(' ')[0];
+                        }
+                    }
+                    catch (Exception)
+                    {
+                    }
                     if (userInput == "exit")
                     {
                         isScanning = false;
@@ -182,9 +190,12 @@ namespace Http_Status_Code
                 HttpResponseMessage checkingResponse = await client.GetAsync(uri);
                 if (checkingResponse.IsSuccessStatusCode)
                 {
+                    if (!ignoreChecks)
+                    {
+                        Task t = Task.Factory.StartNew(() => HttpHeadersHelper.CheckOwaspRecHeader(checkingResponse));
+                        t.Wait();
+                    }
 
-                    Task t = Task.Factory.StartNew(() => HttpHeadersHelper.CheckOwaspRecHeader(checkingResponse));
-                    t.Wait();
                     Console.ForegroundColor = ConsoleColor.Green;
                 }
                 else
@@ -201,21 +212,21 @@ namespace Http_Status_Code
             }
 
         }
-    
+
         private static void TryHttpAndHttps(string url)
         {
             if (url.ToLower().StartsWith("https://"))
             {
                 url = url.Replace("https://", "http://");
             }
-            else if(url.ToLower().StartsWith("http://"))
+            else if (url.ToLower().StartsWith("http://"))
             {
                 url = url.Replace("http://", "https://");
             }
-  
+
             AsyncHelper.RunSync(() => CallTheHostAsync(url));
         }
 
-      
+
     }
 }
